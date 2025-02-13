@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur Période d'Essai Alternant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white shadow-lg rounded-2xl p-8 max-w-md w-full">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">Simulateur de Période d'Essai (45 jours en entreprise)</h1>
+        <label for="startDate" class="block text-gray-600 mb-2">Date d'entrée en entreprise :</label>
+        <input type="date" id="startDate" class="w-full p-3 border rounded-lg mb-4">
+        <button onclick="calculerFinPeriodeEssai()" class="bg-blue-600 text-white w-full py-3 rounded-lg hover:bg-blue-700 transition">Calculer</button>
+
+        <div class="result mt-6 p-4 bg-gray-50 border rounded-lg text-gray-800" id="result"></div>
+    </div>
+
+    <script>
+        function calculerFinPeriodeEssai() {
+            const startDate = new Date(document.getElementById('startDate').value);
+            if (isNaN(startDate)) {
+                document.getElementById('result').textContent = 'Veuillez entrer une date valide.';
+                return;
+            }
+
+            const joursFeries = [
+                '01/01', // Jour de l'an
+                '01/05', // Fête du Travail
+                '08/05', // Victoire 1945
+                '14/07', // Fête nationale
+                '15/08', // Assomption
+                '01/11', // Toussaint
+                '11/11', // Armistice
+                '25/12'  // Noël
+            ];
+
+            let joursTravailles = 0;
+            let dateCourante = new Date(startDate);
+            const vacancesDebut = new Date(dateCourante.getFullYear(), 1, 15); // 15 février
+            const vacancesFin = new Date(dateCourante.getFullYear(), 1, 22); // 22 février
+
+            let joursComptes = [];
+
+            while (joursTravailles < 45) {
+                dateCourante.setDate(dateCourante.getDate() + 1);
+                const jourSemaine = dateCourante.getDay();
+                const estVacances = dateCourante >= vacancesDebut && dateCourante <= vacancesFin;
+
+                const estFerie = joursFeries.includes(
+                    dateCourante.getDate().toString().padStart(2, '0') + '/' + (dateCourante.getMonth() + 1).toString().padStart(2, '0')
+                );
+
+                if (estFerie) continue;
+
+                if (estVacances && jourSemaine >= 1 && jourSemaine <= 5) { // Lundi au vendredi pendant les vacances
+                    joursTravailles++;
+                    joursComptes.push(dateCourante.toLocaleDateString('fr-FR'));
+                } else if (!estVacances && (jourSemaine === 3 || jourSemaine === 4 || jourSemaine === 5)) { // Mercredi, jeudi, vendredi hors vacances
+                    joursTravailles++;
+                    joursComptes.push(dateCourante.toLocaleDateString('fr-FR'));
+                }
+            }
+
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const joursComptesList = joursComptes.map(date => `<li class='bg-blue-50 border-l-4 border-blue-400 p-2 rounded-lg mb-1'>${date}</li>`).join('');
+
+            document.getElementById('result').innerHTML = `
+                <p class='font-semibold text-lg mb-2'>Fin de période d'essai : ${dateCourante.toLocaleDateString('fr-FR', options)}</p>
+                <div class='mt-4'>
+                    <p class='font-medium mb-2'>Jours comptés :</p>
+                    <ul class='list-none pl-0'>
+                        ${joursComptesList}
+                    </ul>
+                </div>`;
+        }
+    </script>
+</body>
+</html>
